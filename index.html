@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gerador de Catálogo com IA</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mu:#6b6b66;--bd:#e2e0d8;--ac:#0f766e;--acx:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161615;--card:#212120;--tx:#f1f0ea;--mu:#a3a29a;--bd:#34342f;--ac:#2dd4bf;--acx:#06201c}}
+:root[data-theme="dark"]{--bg:#161615;--card:#212120;--tx:#f1f0ea;--mu:#a3a29a;--bd:#34342f;--ac:#2dd4bf;--acx:#06201c}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:24px;margin:0 0 4px}h2{font-size:17px;margin:0 0 12px}
+.sub{color:var(--mu);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:16px}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
+input,textarea,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx);font:inherit}
+textarea{min-height:70px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.row{grid-template-columns:1fr}}
+button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:10px 14px}
+button.p{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600}
+button:disabled{opacity:.5;cursor:wait}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.it{border:1px solid var(--bd);border-radius:12px;overflow:hidden;background:var(--card)}
+.it .im{height:130px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--mu);font-size:12px}
+.it img{width:100%;height:100%;object-fit:cover}
+.it .b{padding:10px}.it b{display:block}.it .pr{color:var(--ac);font-weight:700}
+.it small{color:var(--mu);display:block;margin:4px 0 8px;max-height:3.2em;overflow:hidden}
+.it button{padding:5px 10px;font-size:13px;margin-right:4px}
+.empty{color:var(--mu);text-align:center;padding:24px}
+#msg{margin-top:10px;font-size:14px;color:var(--mu)}
+input[type=color]{padding:2px;height:42px}
+#glist{max-height:240px;overflow-y:auto;border:1px solid var(--bd);border-radius:9px;margin-top:8px}
+label.gi{display:flex;gap:10px;align-items:center;margin:0;padding:8px 10px;color:var(--tx);font-size:15px;border-bottom:1px solid var(--bd)}
+label.gi input,#autosend{width:auto}
+#wlog div,.hi .lg div{font-size:14px;padding:3px 0}
+.hi{border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--card)}
+</style>
+</head>
+<body>
+<main>
+<h1>📒 Gerador de Catálogo</h1>
+<p class="sub">Cadastre produtos e preços, deixe a IA escrever os textos e baixe o catálogo em PDF.</p>
+<div class='bar' style='margin:0 0 16px'><button id='tCat' class='p'>📒 Catálogo</button><button id='tHist'>📤 Enviados <span id='hcount'></span></button></div>
+<div id='tabCat'>
+<details class='card'><summary style='cursor:pointer;font-weight:600'>⚙️ IA gratuita (configurar)</summary>
+<p class='sub' style='margin:10px 0 0'>Os botões ✨ usam uma API de IA com plano gratuito. Gemini e Groq pedem uma chave gratuita, que fica salva só neste navegador.</p>
+<label>Serviço</label><select id='aiP'><option value='pollinations'>Pollinations (sem chave)</option><option value='gemini'>Google Gemini (chave gratuita)</option><option value='groq'>Groq (chave gratuita)</option><option value='custom'>Outro (compatível com OpenAI)</option></select>
+<label>Endereço da API</label><input id='aiU'>
+<div class='row'><div><label>Modelo</label><input id='aiM'></div><div><label>Chave</label><input id='aiK' type='password' autocomplete='off'></div></div>
+</details>
+
+<div class="card">
+<h2>1. Sua loja</h2>
+<div class="row">
+<div><label>Nome da loja</label><input id="store" placeholder="Ex.: Doce Encanto"></div>
+<div><label>Contato (WhatsApp, Instagram…)</label><input id="contact" placeholder="Ex.: (48) 99999-0000"></div>
+</div>
+<div class="row">
+<div><label>Título do catálogo</label><input id="tagline" placeholder="Ex.: Coleção Primavera 2026"></div>
+<div><label>Cor do tema</label><input id="color" type="color" value="#0f766e"></div>
+</div>
+<label>Texto de apresentação</label><textarea id="intro" placeholder="Apresentação da capa"></textarea>
+<div class="bar"><button id="aiTexts">✨ Gerar título e apresentação com IA</button></div>
+</div>
+
+<div class="card">
+<h2 id="ftitle">2. Cadastrar produto</h2>
+<div class="row">
+<div><label>Nome do produto</label><input id="pname"></div>
+<div><label>Preço (R$)</label><input id="pprice" inputmode="decimal" placeholder="0,00"></div>
+</div>
+<div class="row">
+<div><label>Categoria (opcional)</label><input id="pcat"></div>
+<div><label>Foto (opcional)</label><input id="pimg" type="file" accept="image/*"></div>
+</div>
+<label>Descrição</label><textarea id="pdesc"></textarea>
+<div class="bar">
+<button id="aiDesc">✨ Gerar descrição com IA</button>
+<button class="p" id="save">Adicionar produto</button>
+<button id="cancel" style="display:none">Cancelar edição</button>
+</div>
+</div>
+
+<div class="card">
+<h2>3. Produtos (<span id="count">0</span>/100)</h2>
+<div id="list" class="grid"></div>
+<div class="bar"><button class="p" id="pdf">📄 Gerar catálogo em PDF</button><button id="clear">Limpar tudo</button></div>
+<div id="msg"></div>
+</div>
+
+<div class='card'>
+<h2>4. Enviar para grupos do WhatsApp</h2>
+<p class='sub' style='margin-bottom:8px'>O PDF vai como documento, um grupo por vez, com pausa de alguns segundos entre os envios.</p>
+<div id='conn' style='border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:14px'>
+<b>Como o envio funciona</b>
+<p class='sub' style='margin:6px 0 0;font-size:13px'>Este site não tem servidor próprio. Para enviar o PDF aos grupos automaticamente, aponte para um servidor seu (n8n, Make, Evolution API etc.) que receba o arquivo e envie pelo WhatsApp. Sem servidor, use “Compartilhar pelo celular” e escolha o grupo na mão.</p>
+<label>Endereço de envio (webhook)</label><input id='wurl' placeholder='https://seu-servidor.com/enviar-catalogo'>
+<div class='row'><div><label>Token (opcional)</label><input id='wtok' type='password' autocomplete='off'></div><div><label>Painel de conexão do seu servidor (opcional)</label><input id='purl' placeholder='https://...'></div></div>
+<div class='bar' style='margin-top:10px'><button id='chk'>🔍 Testar servidor</button><button id='pair'>📱 Mostrar QR do painel</button></div>
+<div id='cstat' style='margin-top:6px;font-size:14px;color:var(--mu)'></div>
+<div id='qrbox' style='display:none;margin-top:12px;text-align:center'>
+<div id='qr' style='display:inline-block;background:#fff;padding:10px;border-radius:10px'></div>
+<p class='sub' style='margin:8px 0 4px;font-size:13px'>Este QR abre o painel do seu servidor no celular. O QR de pareamento do WhatsApp é gerado por esse painel.</p>
+<a id='plink' target='_blank' rel='noopener' style='color:var(--ac);font-weight:600'>Abrir painel</a>
+</div></div>
+<div class='bar' style='margin-top:0'><button id='allG'>Marcar visíveis</button><button id='noneG'>Desmarcar todos</button></div>
+<input id='gfilter' placeholder='Filtrar grupos…' style='margin-top:10px'>
+<div id='glist'></div>
+<label>Seus grupos (um por linha: Nome | ID do grupo)</label><textarea id='manual' style='min-height:80px' placeholder='Clientes Centro | 120363000000000000@g.us'></textarea>
+<label>Mensagem que acompanha o PDF</label><textarea id='cap' placeholder='Se ficar vazio, uso uma mensagem padrão'></textarea>
+<div class='bar' style='margin-top:6px'><button id='aiCap'>✨ Gerar mensagem com IA</button></div>
+<label style='display:flex;gap:8px;align-items:center;color:var(--tx)'><input type='checkbox' id='autosend'> Enviar automaticamente ao clicar em “Gerar catálogo em PDF”</label>
+<div class='bar'><button class='p' id='sendB'>📤 Gerar e enviar agora</button><button id='stopB' style='display:none'>⏹ Parar envio</button><button id='shareB' style='display:none'>Compartilhar pelo celular</button></div>
+<div id='wsel' class='sub' style='margin:10px 0 0'></div>
+<div id='wmsg' style='margin-top:6px;font-size:14px;color:var(--mu)'></div>
+<div id='wlog'></div>
+</div>
+</div>
+<div id='tabHist' style='display:none'>
+<div class='card'><h2>Catálogos enviados</h2><p class='sub' style='margin-bottom:12px'>Cada envio fica salvo aqui com os produtos daquela versão. Você pode reenviar, ou carregar o catálogo de volta para editar e enviar de novo.</p><div id='hlist'></div></div>
+</div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const KEY="catalogo-v1",MAX=100;
+let data={products:[],s:{}},editing=null,photo="";
+
+function load(){try{const r=localStorage.getItem(KEY);if(r)data=JSON.parse(r)}catch(e){}
+ const s=data.s||{};["store","contact","tagline","intro"].forEach(k=>$(k).value=s[k]||"");if(s.color)$("color").value=s.color}
+function persist(){data.s={store:$("store").value,contact:$("contact").value,tagline:$("tagline").value,intro:$("intro").value,color:$("color").value};
+ try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){$("msg").textContent="Não foi possível salvar no navegador (imagens muito grandes?)."}}
+["store","contact","tagline","intro","color"].forEach(k=>$(k).addEventListener("input",persist));
+
+const money=n=>"R$ "+Number(n).toFixed(2).replace(".",",").replace(/\B(?=(\d{3})+(?!\d))/g,".");
+const parse=v=>parseFloat(String(v).replace(/\./g,"").replace(",","."));
+
+function render(){
+ $("count").textContent=data.products.length;$("save").disabled=editing===null&&data.products.length>=MAX;
+ const l=$("list");l.innerHTML="";
+ if(!data.products.length){l.innerHTML='<div class="empty" style="grid-column:1/-1">Nenhum produto ainda.</div>';return}
+ data.products.forEach((p,i)=>{
+  const d=document.createElement("div");d.className="it";
+  const im=document.createElement("div");im.className="im";
+  if(p.img){const t=document.createElement("img");t.src=p.img;im.appendChild(t)}else im.textContent="sem foto";
+  const b=document.createElement("div");b.className="b";
+  const n=document.createElement("b");n.textContent=p.name;
+  const pr=document.createElement("span");pr.className="pr";pr.textContent=money(p.price);
+  const s=document.createElement("small");s.textContent=p.desc||"";
+  const e=document.createElement("button");e.textContent="Editar";e.onclick=()=>edit(i);
+  const x=document.createElement("button");x.textContent="Excluir";x.onclick=()=>{data.products.splice(i,1);persist();render()};
+  b.append(n,pr,s,e,x);d.append(im,b);l.appendChild(d);
+ });
+}
+function edit(i){const p=data.products[i];editing=i;$("pname").value=p.name;$("pprice").value=String(p.price).replace(".",",");
+ $("pcat").value=p.cat||"";$("pdesc").value=p.desc||"";photo=p.img||"";$("save").disabled=false;$("save").textContent="Salvar alterações";$("cancel").style.display="";
+ $("ftitle").textContent="2. Editar produto";$("pname").scrollIntoView({behavior:"smooth",block:"center"})}
+function reset(){editing=null;photo="";["pname","pprice","pcat","pdesc"].forEach(k=>$(k).value="");$("pimg").value="";
+ $("save").textContent="Adicionar produto";$("cancel").style.display="none";$("ftitle").textContent="2. Cadastrar produto"}
+$("cancel").onclick=reset;
+
+$("pimg").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+ r.onload=()=>{const im=new Image();im.onload=()=>{const m=480,k=Math.min(1,m/Math.max(im.width,im.height));
+  const c=document.createElement("canvas");c.width=im.width*k;c.height=im.height*k;
+  const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);
+  photo=c.toDataURL("image/jpeg",.7)};im.src=r.result};r.readAsDataURL(f)};
+
+$("save").onclick=()=>{
+ const name=$("pname").value.trim(),price=parse($("pprice").value);
+ if(!name||isNaN(price)){$("msg").textContent="Informe o nome e um preço válido.";return}
+ if(editing===null&&data.products.length>=MAX){$("msg").textContent="Limite de "+MAX+" produtos atingido. Exclua algum para adicionar outro.";return}
+ const p={name,price,cat:$("pcat").value.trim(),desc:$("pdesc").value.trim(),img:photo};
+ if(editing!==null)data.products[editing]=p;else data.products.push(p);
+ persist();render();reset();$("msg").textContent="Produto salvo ✔"};
+$("clear").onclick=()=>{if(confirm("Apagar todos os produtos?")){data.products=[];persist();render()}};
+
+// ---------- IA ----------
+let samplePromise=null;
+function getSample(){return Promise.resolve(callAI)}
+async function ask(prompt,btn){
+ const sample=await getSample();
+ if(!sample){$("msg").textContent="IA não configurada.";return null}
+ const old=btn.textContent;btn.disabled=true;btn.textContent="Gerando…";
+ try{const r=await sample(prompt,{modelTier:"quick",cache:false});return(r.text||"").trim()}
+ catch(e){$("msg").textContent=e&&e.code==="not_granted"?"Permissão para usar a IA foi negada.":"Falha ao usar a IA: "+(e&&e.message||"erro");return null}
+ finally{btn.disabled=false;btn.textContent=old}
+}
+$("aiDesc").onclick=async function(){
+ const n=$("pname").value.trim();if(!n){$("msg").textContent="Digite o nome do produto primeiro.";return}
+ const t=await ask(`Escreva em português do Brasil uma descrição de catálogo, atraente e honesta, com no máximo 220 caracteres, para o produto "${n}"${$("pcat").value?` (categoria: ${$("pcat").value})`:""}${$("pdesc").value?`. Notas do lojista: ${$("pdesc").value}`:""}. Responda só com o texto da descrição, sem aspas nem emojis.`,this);
+ if(t)$("pdesc").value=t.replace(/^["“]|["”]$/g,"")};
+$("aiTexts").onclick=async function(){
+ persist();const names=data.products.slice(0,15).map(p=>p.name).join(", ")||"produtos variados";
+ const t=await ask(`Loja: "${$("store").value||"minha loja"}". Produtos: ${names}. Crie para a capa de um catálogo em português do Brasil: um título curto (até 6 palavras) e um texto de apresentação de até 300 caracteres. Responda SOMENTE com JSON no formato {"titulo":"...","apresentacao":"..."}.`,this);
+ if(!t)return;
+ try{const j=JSON.parse(t.replace(/```json|```/g,"").trim());$("tagline").value=j.titulo||"";$("intro").value=j.apresentacao||"";persist();$("msg").textContent="Textos gerados ✔"}
+ catch(e){$("msg").textContent="A IA respondeu em formato inesperado. Tente de novo."}};
+
+// ---------- PDF ----------
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+function imgBox(doc,src,x,y,w,h){try{const pr=doc.getImageProperties(src);const k=Math.min(w/pr.width,h/pr.height);
+ const iw=pr.width*k,ih=pr.height*k;doc.addImage(src,"JPEG",x+(w-iw)/2,y+(h-ih)/2,iw,ih)}catch(e){}}
+async function makePdf(snap){
+ if(!window.jspdf){$("msg").textContent="Biblioteca de PDF não carregou.";return}
+ const D=snap||(persist(),data);if(!D.products.length){$("msg").textContent="Cadastre ao menos um produto.";return}
+ const s=D.s,[r,g,b]=hex(s.color||"#0f766e");
+ const doc=new jspdf.jsPDF({unit:"mm",format:"a4"});
+ // capa
+ doc.setFillColor(r,g,b);doc.rect(0,0,210,297,"F");
+ doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(34);
+ doc.text(doc.splitTextToSize(s.store||"Catálogo",170),20,110);
+ doc.setFontSize(18);doc.setFont("helvetica","normal");
+ doc.text(doc.splitTextToSize(s.tagline||"Catálogo de produtos",170),20,140);
+ doc.setFontSize(12);doc.text(doc.splitTextToSize(s.intro||"",160),20,160);
+ if(s.contact){doc.setFontSize(12);doc.text(s.contact,20,270)}
+ // páginas
+ const W=86,H=81,per=6;
+ D.products.forEach((p,i)=>{
+  if(i%per===0){doc.addPage();doc.setFillColor(r,g,b);doc.rect(0,0,210,14,"F");
+   doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont("helvetica","bold");doc.text(s.store||"Catálogo",15,9);
+   doc.setFont("helvetica","normal");doc.text(s.tagline||"",195,9,{align:"right"});
+   doc.setTextColor(120);doc.setFontSize(9);doc.text(String(doc.getNumberOfPages()),105,291,{align:"center"})}
+  const j=i%per,x=15+(j%2)*(W+8),y=22+Math.floor(j/2)*(H+5);
+  doc.setDrawColor(215);doc.setFillColor(255,255,255);doc.roundedRect(x,y,W,H,2,2,"S");
+  if(p.img)imgBox(doc,p.img,x+2,y+2,W-4,46);else{doc.setFillColor(243,243,240);doc.rect(x+2,y+2,W-4,46,"F")}
+  doc.setTextColor(30);doc.setFont("helvetica","bold");doc.setFontSize(11);
+  doc.text(doc.splitTextToSize(p.name,W-8).slice(0,2),x+4,y+55);
+  doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(90);
+  doc.text(doc.splitTextToSize(p.desc||"",W-8).slice(0,3),x+4,y+63);
+  doc.setFont("helvetica","bold");doc.setFontSize(13);doc.setTextColor(r,g,b);
+  doc.text(money(p.price),x+4,y+H-4);
+ });
+ return doc.output("blob");
+}
+$("pdf").onclick=async function(){
+ this.disabled=true;$("msg").textContent="Montando PDF…";
+ try{const blob=await makePdf();if(!blob)return;lastBlob=blob;const fn=(($("store").value||"catalogo").toLowerCase().replace(/[^a-z0-9]+/g,"-"))+".pdf";
+  const dl=null;
+  if(dl){try{await dl.save({filename:fn,data:blob});$("msg").textContent="PDF pronto ✔"}catch(e){$("msg").textContent="PDF gerado (download não salvo)."}}
+  else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fn;a.click();$("msg").textContent="PDF gerado ✔"}
+  if($("autosend").checked&&sel().length)await sendAll(blob)}
+ catch(e){$("msg").textContent="Não foi possível salvar o PDF: "+(e&&e.message||"cancelado")}
+ finally{this.disabled=false}};
+
+// ---------- WhatsApp ----------
+const SRV='Mercado livre',GK='catalogo-wa-v1';
+let lastBlob=null,groups=[],stopFlag=false,mcpP=null,wa={sel:[],names:{},manual:'',cap:'',auto:false};
+try{const r=localStorage.getItem(GK);if(r)wa=Object.assign(wa,JSON.parse(r))}catch(e){}
+const chosen=new Set(wa.sel||[]);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const fname=s=>(((s&&s.store)||$('store').value||'catalogo').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'.pdf';
+const nm=j=>(wa.names&&wa.names[j])||j;
+const setW=t=>{$('wmsg').textContent=t};
+const cfg=()=>({url:($('wurl').value||'').trim(),tok:($('wtok').value||'').trim()});
+const hdrs=c=>Object.assign({'Content-Type':'application/json'},c.tok?{Authorization:'Bearer '+c.tok}:{});
+const werr=(m,c)=>Object.assign(new Error(m),{code:c});
+function getMcp(){return Promise.resolve({callTool:async(srv,tool,a)=>{
+ if(tool!=='whatsapp_send_media')throw werr('operação não suportada','unsupported');
+ const c=cfg();if(!c.url)throw werr('configure o endereço de envio','not_configured');
+ let r;try{r=await fetch(c.url,{method:'POST',headers:hdrs(c),body:JSON.stringify({action:'send_document',to:a.to,filename:a.filename,mimetype:a.mimetype,caption:a.caption,media_base64:a.media_base64})})}
+ catch(e){throw werr('não consegui falar com o servidor (endereço errado ou CORS bloqueado)','network')}
+ if(!r.ok)throw werr('o servidor respondeu '+r.status,r.status===401||r.status===403?'http_auth':'http');
+ return {ok:true}}})}
+function manualList(){return $('manual').value.split('\n').map(s=>s.trim()).filter(Boolean)}
+function sel(){return [...chosen]}
+function saveWa(){wa.sel=[...chosen];wa.manual=$('manual').value;wa.cap=$('cap').value;wa.auto=$('autosend').checked;wa.url=$('wurl').value;wa.tok=$('wtok').value;wa.purl=$('purl').value;try{localStorage.setItem(GK,JSON.stringify(wa))}catch(e){}}
+function upd(){const n=sel().length;$('wsel').textContent=n?n+' grupo(s) selecionado(s) para envio.':'Nenhum grupo selecionado.';saveWa()}
+function errMsg(e){const c=e&&e.code;
+ if(c==='not_configured')return 'configure o endereço de envio (webhook) acima.';
+ if(c==='http_auth')return 'o servidor recusou o token.';
+ if(c==='network')return 'sem resposta do servidor (endereço errado ou CORS). Não dá para saber se saiu; confira no WhatsApp antes de reenviar.';
+ return (e&&e.message)||'erro desconhecido'}
+function renderG(){const q=$('gfilter').value.toLowerCase(),box=$('glist');box.innerHTML='';
+ const arr=groups.filter(g=>g.name.toLowerCase().includes(q));
+ if(!arr.length){box.innerHTML='<div class="empty">Nenhum grupo cadastrado. Cadastre abaixo (Nome | ID).</div>'}
+ arr.forEach(g=>{const l=document.createElement('label');l.className='gi';const c=document.createElement('input');c.type='checkbox';c.checked=chosen.has(g.jid);
+  c.onchange=()=>{c.checked?chosen.add(g.jid):chosen.delete(g.jid);upd()};
+  const s=document.createElement('span');s.textContent=g.name+(g.n?' ('+g.n+')':'');l.append(c,s);box.appendChild(l)});
+ upd()}
+$('gfilter').oninput=renderG;
+$('allG').onclick=()=>{const q=$('gfilter').value.toLowerCase();groups.filter(g=>g.name.toLowerCase().includes(q)).forEach(g=>chosen.add(g.jid));renderG()};
+$('noneG').onclick=()=>{chosen.clear();renderG()};
+['manual','cap','wurl','wtok','purl'].forEach(k=>$(k).addEventListener('input',upd));$('manual').addEventListener('input',parseReg);$('autosend').onchange=upd;
+function toB64(blob){return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=()=>no(new Error('Falha ao ler o PDF'));r.readAsDataURL(blob)})}
+function addLog(t){const d=document.createElement('div');d.textContent=t;$('wlog').appendChild(d);return d}
+async function sendAll(blob,o){
+ o=o||{};const list=o.list||sel(),logEl=o.log||$('wlog'),say=o.say||setW,sb=o.stopBtn||$('stopB');
+ if(!list.length){say('Selecione ao menos um grupo.');return}
+ const mcp=await getMcp();if(!mcp){say('Envio indisponível.');return}
+ if(!o.snap){persist();saveWa()}
+ const snap=o.snap||JSON.parse(JSON.stringify(data));
+ stopFlag=false;sb.style.display='';logEl.innerHTML='';if(!o.list)$('sendB').disabled=true;
+ const cap=(o.cap!=null?o.cap:$('cap').value).trim()||('Olá! Segue o catálogo '+(snap.s.store||'nosso')+' atualizado 📒');
+ const addL=t=>{const d=document.createElement('div');d.textContent=t;logEl.appendChild(d);return d};
+ const results=[];let ok=0;
+ try{const b64=await toB64(blob),fn=fname(snap.s);
+  for(let i=0;i<list.length;i++){
+   if(stopFlag){addL('Envio interrompido.');break}
+   const j=list[i],row=addL('⏳ '+nm(j)+'…');say('Enviando '+(i+1)+' de '+list.length+'…');
+   try{await mcp.callTool(SRV,'whatsapp_send_media',{to:j,type:'document',media_base64:b64,mimetype:'application/pdf',filename:fn,caption:cap},{cache:false});
+    row.textContent='✅ '+nm(j);ok++;results.push({jid:j,name:nm(j),ok:true})}
+   catch(e){row.textContent='❌ '+nm(j)+' — '+errMsg(e);results.push({jid:j,name:nm(j),ok:false,err:errMsg(e)});
+    if(['not_configured','unsupported','http_auth'].includes(e&&e.code)){addL('Envio interrompido: '+errMsg(e));break}}
+   if(i<list.length-1&&!stopFlag)await sleep(4000+Math.random()*4000)}
+  say('Concluído: '+ok+' de '+list.length+' enviados.')}
+ catch(e){say('Erro no envio: '+((e&&e.message)||'desconhecido'))}
+ finally{sb.style.display='none';if(!o.list)$('sendB').disabled=false}
+ if(results.length){try{await saveSend(snap,cap,results,o.recId);if(o.onSaved)o.onSaved()}catch(e){addL('Aviso: não foi possível salvar no histórico.')}}}
+$('stopB').onclick=()=>{stopFlag=true;setW('Parando após o envio atual…')};
+$('sendB').onclick=async function(){
+ if(!sel().length){setW('Selecione ao menos um grupo.');return}
+ this.disabled=true;setW('Montando PDF…');
+ try{const blob=await makePdf();if(!blob){this.disabled=false;return}lastBlob=blob}catch(e){setW('Erro ao gerar o PDF.');this.disabled=false;return}
+ this.disabled=false;await sendAll(lastBlob)};
+$('aiCap').onclick=async function(){
+ persist();const t=await ask('Escreva em português do Brasil uma mensagem curta de WhatsApp (até 250 caracteres, no máximo 2 emojis) avisando que o catálogo da loja "'+($('store').value||'minha loja')+'"'+($('tagline').value?' (“'+$('tagline').value+'”)':'')+' está atualizado e anexado em PDF. Responda só com o texto da mensagem.',this);
+ if(t){$('cap').value=t.replace(/^["“]|["”]$/g,'');upd()}};
+try{if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File(['x'],'a.pdf',{type:'application/pdf'})]}))$('shareB').style.display=''}catch(e){}
+$('shareB').onclick=async()=>{try{const blob=lastBlob||await makePdf();if(!blob)return;lastBlob=blob;await navigator.share({files:[new File([blob],fname(),{type:'application/pdf'})],text:$('cap').value||''})}catch(e){}};
+$('manual').value=wa.manual||'';$('cap').value=wa.cap||'';$('autosend').checked=!!wa.auto;$('wurl').value=wa.url||'';$('wtok').value=wa.tok||'';$('purl').value=wa.purl||'';
+parseReg();
+renderG();
+
+// ---------- Conexão (QR) e histórico ----------
+function parseReg(){
+ groups=$('manual').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split('|'),id=(p.length>1?p.slice(1).join('|'):p[0]).trim(),name=p[0].trim();return {jid:id,name:name||id,n:0}}).filter(g=>g.jid);
+ groups.forEach(g=>{wa.names[g.jid]=g.name});
+ [...chosen].forEach(j=>{if(!groups.some(g=>g.jid===j))chosen.delete(j)});
+ renderG()}
+function showQr(url){$('qrbox').style.display='';$('qr').innerHTML='';
+ if(window.QRCode){try{new QRCode($('qr'),{text:url,width:200,height:200})}catch(e){}}
+ $('plink').href=url}
+$('chk').onclick=async function(){
+ const c=cfg();if(!c.url){$('cstat').textContent='Informe o endereço de envio.';return}
+ this.disabled=true;$('cstat').textContent='testando…';
+ try{const r=await fetch(c.url,{method:'POST',headers:hdrs(c),body:JSON.stringify({action:'ping'})});
+  $('cstat').textContent=r.ok?'✅ servidor respondeu ('+r.status+')':'⚠️ servidor respondeu '+r.status}
+ catch(e){$('cstat').textContent='❌ não consegui falar com o servidor (endereço errado ou CORS bloqueado)'}
+ finally{this.disabled=false}};
+$('pair').onclick=()=>{const u=($('purl').value||'').trim();if(!/^https?:\/\//.test(u)){$('cstat').textContent='Informe o link do painel (começa com https://).';return}$('cstat').textContent='';showQr(u)};
+
+const HDB={db:null,
+ open(){return new Promise((ok,no)=>{if(this.db)return ok(this.db);let q;try{q=indexedDB.open('catalogo-hist',1)}catch(e){return no(e)}
+  q.onupgradeneeded=()=>q.result.createObjectStore('h',{keyPath:'id'});
+  q.onsuccess=()=>{this.db=q.result;ok(q.result)};q.onerror=()=>no(q.error)})},
+ async tx(mode,fn){const db=await this.open();return new Promise((ok,no)=>{const t=db.transaction('h',mode),r=fn(t.objectStore('h'));t.oncomplete=()=>ok(r&&r.result);t.onerror=()=>no(t.error);t.onabort=()=>no(t.error)})},
+ all(){return this.tx('readonly',s=>s.getAll())},get(id){return this.tx('readonly',s=>s.get(id))},
+ put(x){return this.tx('readwrite',s=>s.put(x))},del(id){return this.tx('readwrite',s=>s.delete(id))}};
+async function saveSend(snap,cap,results,recId){
+ const send={at:Date.now(),cap,results};let rec=recId?await HDB.get(recId):null;
+ if(rec)rec.sends.push(send);else rec={id:'h'+Date.now(),title:snap.s.tagline||snap.s.store||'Catálogo',count:snap.products.length,snap,sends:[send]};
+ await HDB.put(rec);refreshCount()}
+function refreshCount(){HDB.all().then(a=>{$('hcount').textContent=a.length?'('+a.length+')':''}).catch(()=>{})}
+const fmt=t=>new Date(t).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+const lastOf=r=>r.sends[r.sends.length-1];
+const btn=t=>{const b=document.createElement('button');b.textContent=t;return b};
+function twoClick(b,ask,fn){const t=b.textContent;let a=false;b.onclick=()=>{if(!a){a=true;b.textContent=ask;setTimeout(()=>{if(a){a=false;b.textContent=t}},4000);return}a=false;b.textContent=t;fn()}}
+function tab(n){$('tabCat').style.display=n==='cat'?'':'none';$('tabHist').style.display=n==='hist'?'':'none';
+ $('tCat').className=n==='cat'?'p':'';$('tHist').className=n==='hist'?'p':'';if(n==='hist')renderH()}
+$('tCat').onclick=()=>tab('cat');$('tHist').onclick=()=>tab('hist');
+function loadSnap(rec){
+ data=JSON.parse(JSON.stringify(rec.snap));const s=data.s||{};
+ ['store','contact','tagline','intro'].forEach(k=>{$(k).value=s[k]||''});if(s.color)$('color').value=s.color;
+ const last=lastOf(rec);chosen.clear();
+ last.results.forEach(r=>{chosen.add(r.jid);wa.names[r.jid]=r.name||wa.names[r.jid]||r.jid});
+ chosen.forEach(j=>{if(!groups.some(g=>g.jid===j)){const m=$('manual');m.value+=(m.value&&!m.value.endsWith('\n')?'\n':'')+nm(j)+' | '+j}});parseReg();
+ $('cap').value=last.cap||'';reset();persist();render();renderG();tab('cat');
+ $('msg').textContent='Catálogo do envio de '+fmt(last.at)+' carregado. Edite e use “Gerar catálogo em PDF” ou “Gerar e enviar agora”.';
+ window.scrollTo({top:0,behavior:'smooth'})}
+function openPanel(rec,host){
+ if(host.firstChild){host.innerHTML='';return}
+ const last=lastOf(rec),known=new Map();
+ Object.keys(wa.names||{}).forEach(j=>known.set(j,wa.names[j]));
+ rec.sends.forEach(x=>x.results.forEach(r=>known.set(r.jid,r.name||known.get(r.jid)||r.jid)));
+ const pre=new Set(last.results.map(r=>r.jid)),bad=new Set(last.results.filter(r=>!r.ok).map(r=>r.jid));
+ const w=document.createElement('div');w.style.cssText='margin-top:10px;border-top:1px solid var(--bd);padding-top:10px';
+ const l1=document.createElement('label');l1.textContent='Mensagem (pode editar antes de reenviar)';
+ const ta=document.createElement('textarea');ta.value=last.cap||'';
+ const l2=document.createElement('label');l2.textContent='Grupos';
+ const list=document.createElement('div');list.style.cssText='max-height:200px;overflow-y:auto;border:1px solid var(--bd);border-radius:9px';
+ const boxes=[];
+ [...known.entries()].sort((a,b)=>String(a[1]).localeCompare(String(b[1]))).forEach(([j,n])=>{
+  const l=document.createElement('label');l.className='gi';const c=document.createElement('input');c.type='checkbox';c.checked=pre.has(j);boxes.push([j,c]);
+  const sp=document.createElement('span');sp.textContent=(bad.has(j)?'❌ ':'')+n;l.append(c,sp);list.appendChild(l)});
+ const bar=document.createElement('div');bar.className='bar';
+ const bf=btn('Só os que falharam'),bs=btn('📤 Enviar agora'),bx=btn('⏹ Parar');bs.className='p';bx.style.display='none';bf.style.display=bad.size?'':'none';
+ const st=document.createElement('div');st.style.cssText='margin-top:8px;font-size:14px;color:var(--mu)';
+ const lg=document.createElement('div');lg.className='lg';
+ bf.onclick=()=>boxes.forEach(([j,c])=>{c.checked=bad.has(j)});
+ bx.onclick=()=>{stopFlag=true;st.textContent='Parando após o envio atual…'};
+ bs.onclick=async()=>{const pick=boxes.filter(([j,c])=>c.checked).map(([j])=>j);
+  if(!pick.length){st.textContent='Selecione ao menos um grupo.';return}
+  bs.disabled=true;st.textContent='Montando PDF…';
+  try{const blob=await makePdf(rec.snap);if(!blob){st.textContent='Não foi possível gerar o PDF.';bs.disabled=false;return}
+   await sendAll(blob,{snap:rec.snap,list:pick,cap:ta.value,log:lg,say:t=>{st.textContent=t},recId:rec.id,stopBtn:bx,onSaved:refreshCount})}
+  catch(e){st.textContent='Erro: '+((e&&e.message)||'falha')}
+  bs.disabled=false};
+ bar.append(bf,bs,bx);w.append(l1,ta,l2,list,bar,st,lg);host.appendChild(w)}
+async function renderH(){
+ const box=$('hlist');box.innerHTML='';let all;
+ try{all=await HDB.all()}catch(e){box.innerHTML='<div class="empty">Histórico indisponível neste navegador.</div>';return}
+ $('hcount').textContent=all.length?'('+all.length+')':'';
+ if(!all.length){box.innerHTML='<div class="empty">Nenhum envio ainda. Os catálogos enviados aparecem aqui.</div>';return}
+ all.sort((a,b)=>lastOf(b).at-lastOf(a).at);
+ all.forEach(rec=>{
+  const last=lastOf(rec),d=document.createElement('div');d.className='hi';
+  const t=document.createElement('b');t.textContent=rec.title;
+  const m=document.createElement('div');m.style.cssText='font-size:13px;color:var(--mu);margin:2px 0 6px';
+  m.textContent=rec.count+' produto(s) · '+rec.sends.length+' envio(s) · último: '+fmt(last.at);
+  const names=last.results.map(r=>(r.ok?'✅ ':'❌ ')+(r.name||r.jid));
+  const g=document.createElement('div');g.style.fontSize='14px';g.textContent=names.slice(0,6).join('   ')+(names.length>6?'   +'+(names.length-6):'');
+  const c=document.createElement('div');c.style.cssText='font-size:13px;color:var(--mu);margin-top:6px';c.textContent='Mensagem: '+(last.cap||'');
+  const bar=document.createElement('div');bar.className='bar';bar.style.marginTop='10px';
+  const b1=btn('🔁 Reenviar'),b2=btn('✏️ Editar'),b3=btn('🗑 Excluir'),host=document.createElement('div');
+  b1.onclick=()=>openPanel(rec,host);
+  twoClick(b2,'Substituir catálogo atual?',()=>loadSnap(rec));
+  twoClick(b3,'Confirmar exclusão',async()=>{try{await HDB.del(rec.id)}catch(e){}renderH()});
+  bar.append(b1,b2,b3);d.append(t,m,g,c,bar,host);box.appendChild(d)})}
+refreshCount();
+
+// ---------- IA gratuita (API compatível com OpenAI) ----------
+const AIP={pollinations:{url:'https://text.pollinations.ai/openai',model:'openai'},gemini:{url:'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',model:'gemini-flash-latest'},groq:{url:'https://api.groq.com/openai/v1/chat/completions',model:'llama-3.1-8b-instant'}};
+const AIK='catalogo-ai-v1';let ai={p:'pollinations',u:AIP.pollinations.url,m:AIP.pollinations.model,k:''};
+try{const r=localStorage.getItem(AIK);if(r)ai=Object.assign(ai,JSON.parse(r))}catch(e){}
+function aiSave(){ai={p:$('aiP').value,u:$('aiU').value.trim(),m:$('aiM').value.trim(),k:$('aiK').value.trim()};try{localStorage.setItem(AIK,JSON.stringify(ai))}catch(e){}}
+$('aiP').onchange=()=>{const p=AIP[$('aiP').value];if(p){$('aiU').value=p.url;$('aiM').value=p.model}aiSave()};
+['aiU','aiM','aiK'].forEach(k=>$(k).addEventListener('input',aiSave));
+$('aiP').value=ai.p;$('aiU').value=ai.u;$('aiM').value=ai.m;$('aiK').value=ai.k;
+async function callAI(prompt){
+ if(!ai.u)throw new Error('configure a IA em “⚙️ IA gratuita”');
+ let r;try{r=await fetch(ai.u,{method:'POST',headers:Object.assign({'Content-Type':'application/json'},ai.k?{Authorization:'Bearer '+ai.k}:{}),body:JSON.stringify({model:ai.m,messages:[{role:'user',content:prompt}],temperature:0.7})})}
+ catch(e){throw new Error('não consegui acessar o serviço de IA (confira endereço, chave e conexão)')}
+ if(!r.ok){let t='';try{t=(await r.text()).slice(0,120)}catch(e){}throw new Error('a IA respondeu '+r.status+(t?': '+t:''))}
+ const j=await r.json(),t=j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;
+ if(!t)throw new Error('resposta vazia da IA');return {text:t}}
+
+load();render();
+</script>
+</body>
+</html>
